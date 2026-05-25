@@ -97,6 +97,16 @@ channels (`getChannel`/`getChannels`/`setChannel`/`deleteChannel`/
 Inputs that take a contact accept a `Contact`, a hex public-key string, or raw
 `Uint8Array` bytes (`ContactRef`).
 
+## Examples
+
+- [`examples/list-contacts.ts`](examples/list-contacts.ts) — connect, print self info + contacts.
+- [`examples/monitor.ts`](examples/monitor.ts) — live, color-coded traffic monitor for a node.
+
+```sh
+bun examples/monitor.ts 172.16.0.23 5000        # monitor until Ctrl-C
+bun examples/monitor.ts 172.16.0.23 5000 30     # ...for 30 seconds
+```
+
 ## Development
 
 ```sh
