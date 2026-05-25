@@ -3,11 +3,12 @@ name: meshcore-ts
 # Runtime & tooling. node is first, so it selects the node:22-slim base image;
 # the rest layer on top during the cached image build.
 dependencies:
-  - node@22
   - bun
   - typescript
   - git
   - gh
+  - node
+  - claude-code@2.1.150 # 2.1.150 steals text input; pin to known-good build
 
 # Credentials injected into the sandbox.
 #   github        -> GitHub API (gh CLI, REST)
@@ -16,6 +17,7 @@ dependencies:
 grants:
   - github
   - ssh:github.com
+  - claude
 
 # Cache installed packages across runs so reinstalls are fast without adding
 # anything to startup. bun installs into node_modules by default.
