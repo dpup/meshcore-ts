@@ -1,0 +1,27 @@
+name: meshcore-ts
+
+# Runtime & tooling. node is first, so it selects the node:22-slim base image;
+# the rest layer on top during the cached image build.
+dependencies:
+  - node@22
+  - bun
+  - typescript
+  - git
+  - gh
+
+# Credentials injected into the sandbox.
+#   github        -> GitHub API (gh CLI, REST)
+#   ssh:github.com -> SSH access for git@github.com clones/pushes
+# Store these first with `moat grant github` and `moat grant ssh:github.com`.
+grants:
+  - github
+  - ssh:github.com
+
+# Cache installed packages across runs so reinstalls are fast without adding
+# anything to startup. bun installs into node_modules by default.
+volumes:
+  - name: node-modules
+    target: /workspace/node_modules
+
+# Pre-run hooks are kept empty: they run on every container start and add
+# latency. Run `bun install` manually in the sandbox when dependencies change.
