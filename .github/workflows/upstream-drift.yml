@@ -1,0 +1,96 @@
+name: Upstream drift check
+
+# Watches @liamcottle/meshcore.js for releases newer than the version this
+# wrapper targets, and opens a GitHub issue with the upstream diff so the mirrors
+# (src/enums.ts, src/meshcore.d.ts, client.ts bindings) can be reconciled.
+# Deterministic — no API keys, no AI. (An optional Claude step is stubbed at the
+# bottom of this file.)
+
+on:
+  schedule:
+    - cron: "0 9 * * 1" # Mondays 09:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  issues: write
+
+env:
+  PKG: "@liamcottle/meshcore.js"
+  UPSTREAM_REPO: meshcore-dev/meshcore.js
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Determine versions
+        id: ver
+        run: |
+          base=$(node -p "require('./package.json').dependencies['${PKG}'].match(/[0-9]+\.[0-9]+\.[0-9]+/)[0]")
+          latest=$(npm view "${PKG}" version)
+          echo "base=$base"     >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          echo "We target v$base; latest on npm is v$latest."
+
+      - name: Report up to date
+        if: steps.ver.outputs.base == steps.ver.outputs.latest
+        run: echo "No drift — ${PKG} is at v${{ steps.ver.outputs.latest }}, matching our baseline."
+
+      - name: Build drift report
+        if: steps.ver.outputs.base != steps.ver.outputs.latest
+        env:
+          BASE: ${{ steps.ver.outputs.base }}
+          LATEST: ${{ steps.ver.outputs.latest }}
+        run: |
+          fetch() { curl -fsSL "https://raw.githubusercontent.com/${UPSTREAM_REPO}/v$1/src/$2" -o "$3" || echo "(could not fetch v$1/src/$2)" > "$3"; }
+          fetch "$BASE"   constants.js            base_constants.js
+          fetch "$LATEST" constants.js            latest_constants.js
+          fetch "$BASE"   connection/connection.js base_conn.js
+          fetch "$LATEST" connection/connection.js latest_conn.js
+
+          methods() { grep -nE '^    (async )?[a-zA-Z_][a-zA-Z0-9_]*[[:space:]]*\(' "$1" | sed -E 's/^[0-9]+://'; }
+
+          {
+            echo "A newer release of \`${PKG}\` (**v${LATEST}**) is available; this wrapper targets **v${BASE}**."
+            echo
+            echo "Reconcile the mirrors as needed — \`src/enums.ts\`, \`src/meshcore.d.ts\`, and \`client.ts\` event bindings — then bump the dependency. \`test/drift.test.ts\` verifies the value/method mirrors once the dep is updated."
+            echo
+            echo "### \`constants.js\` diff (v${BASE} → v${LATEST})"
+            echo '```diff'
+            diff -u base_constants.js latest_constants.js | head -200 || true
+            echo '```'
+            echo
+            echo "### \`connection.js\` method changes (v${BASE} → v${LATEST})"
+            echo '```diff'
+            diff -u <(methods base_conn.js) <(methods latest_conn.js) | head -120 || true
+            echo '```'
+          } > issue-body.md
+
+      - name: Open issue if not already filed
+        if: steps.ver.outputs.base != steps.ver.outputs.latest
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BASE: ${{ steps.ver.outputs.base }}
+          LATEST: ${{ steps.ver.outputs.latest }}
+        run: |
+          title="Upstream drift: ${PKG} v${LATEST} available (we target v${BASE})"
+          gh label create upstream-drift --color FBCA04 \
+            --description "Tracks drift vs @liamcottle/meshcore.js" 2>/dev/null || true
+          existing=$(gh issue list --state open --search "in:title \"$title\"" --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            echo "Issue #$existing already open for v${LATEST}; nothing to do."
+          else
+            gh issue create --title "$title" --body-file issue-body.md --label upstream-drift
+          fi
+
+# --- Optional: AI-assisted reconciliation (disabled) ----------------------------
+# When you're ready, install the Claude GitHub app, add an ANTHROPIC_API_KEY secret,
+# and add a step (gated on `steps.ver.outputs.base != steps.ver.outputs.latest`)
+# that runs anthropics/claude-code-action to read the diff above plus src/ and open
+# a *draft* PR proposing the wrapper changes. Keep it behind the drift condition so
+# it never burns tokens when there's nothing to do, and require human review.
