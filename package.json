@@ -1,0 +1,45 @@
+{
+  "name": "meshcore-ts",
+  "version": "0.1.0",
+  "description": "Typed, ergonomic TypeScript wrapper around @liamcottle/meshcore.js for talking to MeshCore Companion Radio devices over TCP or USB serial.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Dan Pupius",
+  "keywords": [
+    "meshcore",
+    "mesh",
+    "lora",
+    "radio",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json && node scripts/postbuild.mjs",
+    "clean": "rm -rf dist",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "dependencies": {
+    "@liamcottle/meshcore.js": "^1.13.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0",
+    "vitest": "^2.1.0"
+  }
+}
