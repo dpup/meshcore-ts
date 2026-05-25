@@ -7,10 +7,13 @@
 [![Node](https://img.shields.io/badge/node-%E2%89%A518-brightgreen.svg)](#)
 [![Module: ESM](https://img.shields.io/badge/module-ESM-f7df1e.svg)](#)
 
-`meshcore-ts` wraps [`@liamcottle/meshcore.js`](https://github.com/meshcore-dev/meshcore.js)
-with first-class TypeScript types, named events, and a clean promise-based API —
-so you can talk to a MeshCore node over WiFi or USB without wrangling raw numeric
-byte codes and `Uint8Array`s.
+`meshcore-ts` is a **thin, typed wrapper** over the official
+[`@liamcottle/meshcore.js`](https://github.com/meshcore-dev/meshcore.js) — it does
+**not** reimplement the protocol. That library does the wire work; this one
+delegates to it and adds a first-class TypeScript surface: typed methods, named
+events, normalized values, and proper errors. So you talk to a MeshCore node over
+WiFi or USB without wrangling raw numeric byte codes and `Uint8Array`s — and you
+get upstream protocol updates for free.
 
 ```ts
 import { MeshCoreClient } from "@dpup/meshcore-ts";
@@ -134,14 +137,17 @@ bun examples/monitor.ts 172.16.0.23 5000        # monitor until Ctrl-C
 bun examples/monitor.ts 172.16.0.23 5000 30     # …for 30 seconds
 ```
 
-## Notes
+## Design & notes
 
-- **ESM-only / Node-only.** This mirrors `meshcore.js` (itself ESM-only) and keeps
-  the `serialport` dependency out of browser bundles. Browser BLE/WebSerial
-  transports are intentionally not exposed.
+- **A wrapper, not a reimplementation.** All protocol logic lives in
+  `@liamcottle/meshcore.js`; this package delegates to it and layers on types,
+  normalization, and safety — so it tracks upstream automatically. The raw
+  connection is always reachable via `client.raw` for anything unwrapped.
+- **Node-focused, ESM-only.** Transports are TCP/WiFi and USB serial. ESM-only
+  mirrors `meshcore.js` and keeps the `serialport` dependency out of browser
+  bundles; browser BLE/WebSerial transports are intentionally not exposed.
 - **Values are normalized.** Keys/paths/secrets are hex strings and timestamps are
-  `Date`s; the wrapper converts back when sending. The raw connection remains
-  available via `client.raw` for anything unwrapped.
+  `Date`s; the wrapper converts back when sending.
 
 ## Development
 
