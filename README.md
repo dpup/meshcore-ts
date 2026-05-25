@@ -93,17 +93,36 @@ const client = MeshCoreClient.tcp(host, port, {
 
 ## API
 
-`MeshCoreClient` provides typed wrappers across the full companion API:
+`MeshCoreClient` provides typed wrappers across the full companion API. All are
+fully typed — your editor's autocomplete is the canonical reference.
 
-- **Device** — `getSelfInfo`, `getDeviceTime` / `setDeviceTime` / `syncDeviceTime`, `getBatteryVoltage`, `deviceQuery`, `reboot`, `exportPrivateKey` / `importPrivateKey`
-- **Contacts** — `getContacts`, `findContactByName`, `findContactByPublicKeyPrefix`, `import` / `export` / `share` / `remove` / `addOrUpdateContact`, `setContactPath`, `resetPath`, `setAutoAddContacts` / `setManualAddContacts`
-- **Messaging** — `sendTextMessage`, `sendChannelTextMessage`, `syncNextMessage`, `getWaitingMessages`
-- **Channels** — `getChannel` / `getChannels` / `setChannel` / `deleteChannel`, `findChannelByName` / `findChannelBySecret`
-- **Radio & adverts** — `sendAdvert` / `sendFloodAdvert` / `sendZeroHopAdvert`, `setAdvertName`, `setAdvertLatLong`, `setTxPower`, `setRadioParams`
-- **Remote nodes** — `login`, `getStatus`, `getTelemetry`, `getNeighbours`, `sendBinaryRequest`
-- **Misc** — `getStats` / `getStatsCore` / `getStatsRadio` / `getStatsPackets`, `sign`, `tracePath`
-
-All are fully typed; your editor's autocomplete is the reference.
+- **Device**
+  - `getSelfInfo()`
+  - `getDeviceTime()`, `setDeviceTime()`, `syncDeviceTime()`
+  - `getBatteryVoltage()`, `deviceQuery()`, `reboot()`
+  - `exportPrivateKey()`, `importPrivateKey()`
+- **Contacts**
+  - `getContacts()`, `findContactByName()`, `findContactByPublicKeyPrefix()`
+  - `importContact()`, `exportContact()`, `shareContact()`, `removeContact()`
+  - `addOrUpdateContact()`, `setContactPath()`, `resetPath()`
+  - `setAutoAddContacts()`, `setManualAddContacts()`
+- **Messaging**
+  - `sendTextMessage()`, `sendChannelTextMessage()`
+  - `syncNextMessage()`, `getWaitingMessages()`
+- **Channels**
+  - `getChannel()`, `getChannels()`
+  - `setChannel()`, `deleteChannel()`
+  - `findChannelByName()`, `findChannelBySecret()`
+- **Radio & adverts**
+  - `sendAdvert()`, `sendFloodAdvert()`, `sendZeroHopAdvert()`
+  - `setAdvertName()`, `setAdvertLatLong()`
+  - `setTxPower()`, `setRadioParams()`
+- **Remote nodes**
+  - `login()`, `getStatus()`, `getTelemetry()`
+  - `getNeighbours()`, `sendBinaryRequest()`
+- **Stats, signing & tracing**
+  - `getStats()`, `getStatsCore()`, `getStatsRadio()`, `getStatsPackets()`
+  - `sign()`, `tracePath()`
 
 ## Examples
 
