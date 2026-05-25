@@ -4,7 +4,7 @@
  *
  * @example
  * ```ts
- * import { MeshCoreClient } from "meshcore-ts";
+ * import { MeshCoreClient } from "@dpup/meshcore-ts";
  *
  * const client = MeshCoreClient.tcp("192.168.1.50", 5000);
  * client.on("contactMessage", (msg) => console.log(msg.text));

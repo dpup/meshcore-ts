@@ -1,6 +1,9 @@
 {
-  "name": "meshcore-ts",
+  "name": "@dpup/meshcore-ts",
   "version": "0.1.0",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "Typed, ergonomic TypeScript wrapper around @liamcottle/meshcore.js for talking to MeshCore Companion Radio devices over TCP or USB serial.",
   "type": "module",
   "license": "MIT",

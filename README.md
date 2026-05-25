@@ -13,7 +13,7 @@ so you can talk to a MeshCore node over WiFi or USB without wrangling raw numeri
 byte codes and `Uint8Array`s.
 
 ```ts
-import { MeshCoreClient } from "meshcore-ts";
+import { MeshCoreClient } from "@dpup/meshcore-ts";
 
 const client = MeshCoreClient.tcp("192.168.1.50", 5000);
 client.on("contactMessage", (msg) => console.log(`${msg.pubKeyPrefix}: ${msg.text}`));
@@ -34,7 +34,7 @@ const contacts = await client.getContacts();
 ## Install
 
 ```sh
-npm install meshcore-ts      # or: bun add meshcore-ts / pnpm add meshcore-ts
+npm install @dpup/meshcore-ts      # or: bun add @dpup/meshcore-ts / pnpm add @dpup/meshcore-ts
 ```
 
 ESM-only, **Node.js ≥ 18**. The `@liamcottle/meshcore.js` dependency is installed automatically.
@@ -42,7 +42,7 @@ ESM-only, **Node.js ≥ 18**. The `@liamcottle/meshcore.js` dependency is instal
 ## Quick start
 
 ```ts
-import { MeshCoreClient, TxtType } from "meshcore-ts";
+import { MeshCoreClient, TxtType } from "@dpup/meshcore-ts";
 
 // Connect over TCP/WiFi …
 const client = MeshCoreClient.tcp("192.168.1.50", 5000);
