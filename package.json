@@ -5,6 +5,12 @@
   "type": "module",
   "license": "MIT",
   "author": "Dan Pupius",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dpup/meshcore-ts.git"
+  },
+  "homepage": "https://github.com/dpup/meshcore-ts#readme",
+  "bugs": "https://github.com/dpup/meshcore-ts/issues",
   "keywords": [
     "meshcore",
     "mesh",
