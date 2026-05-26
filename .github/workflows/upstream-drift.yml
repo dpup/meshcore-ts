@@ -70,12 +70,12 @@ jobs:
             echo
             echo "### \`constants.js\` diff (v${BASE} → v${LATEST})"
             echo '```diff'
-            diff -u base_constants.js latest_constants.js | head -200 || true
+            diff -u -L "v${BASE}/constants.js" -L "v${LATEST}/constants.js" base_constants.js latest_constants.js | head -200 || true
             echo '```'
             echo
             echo "### \`connection.js\` method changes (v${BASE} → v${LATEST})"
             echo '```diff'
-            diff -u <(methods base_conn.js) <(methods latest_conn.js) | head -120 || true
+            diff -u -L "v${BASE}/connection.js" -L "v${LATEST}/connection.js" <(methods base_conn.js) <(methods latest_conn.js) | head -120 || true
             echo '```'
           } > issue-body.md
 
