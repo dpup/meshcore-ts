@@ -31,11 +31,13 @@ import { MeshCoreError, MeshCoreTimeoutError, normalizeRejection } from "./error
 import { TypedEventEmitter, type MeshCoreEvents } from "./events.js";
 import { type Bytes, fromHex, toBytes, toHex } from "./hex.js";
 import type {
+  BatteryVoltage,
   Channel,
   Contact,
   ContactMessage,
   ChannelData,
   ChannelMessage,
+  DeviceInfo,
   Neighbour,
   NeighboursResult,
   RepeaterStats,
@@ -397,12 +399,14 @@ export class MeshCoreClient extends TypedEventEmitter<MeshCoreEvents> {
     await this.setDeviceTime(new Date());
   }
 
-  async getBatteryVoltage(): Promise<{ milliVolts: number; volts: number }> {
+  async getBatteryVoltage(): Promise<BatteryVoltage> {
     const { batteryMilliVolts } = await this.request(() => this.raw.getBatteryVoltage());
     return { milliVolts: batteryMilliVolts, volts: batteryMilliVolts / 1000 };
   }
 
-  async deviceQuery(appTargetVer = Constants.SupportedCompanionProtocolVersion) {
+  async deviceQuery(
+    appTargetVer = Constants.SupportedCompanionProtocolVersion,
+  ): Promise<DeviceInfo> {
     const info = await this.request(() => this.raw.deviceQuery(appTargetVer));
     return {
       firmwareVer: info.firmwareVer,
@@ -446,10 +450,23 @@ export class MeshCoreClient extends TypedEventEmitter<MeshCoreEvents> {
     await this.request(() => this.raw.setAdvertLatLong(latitude, longitude));
   }
 
+  /**
+   * Set the radio transmit power.
+   *
+   * @param txPower Transmit power in dBm.
+   */
   async setTxPower(txPower: number): Promise<void> {
     await this.request(() => this.raw.setTxPower(txPower));
   }
 
+  /**
+   * Configure the LoRa radio parameters.
+   *
+   * @param radioFreq Centre frequency in kHz (e.g. `910525` for 910.525 MHz).
+   * @param radioBw Bandwidth in kHz.
+   * @param radioSf Spreading factor (typically 7–12).
+   * @param radioCr Coding-rate denominator (5–8, for rates 4/5 to 4/8).
+   */
   async setRadioParams(
     radioFreq: number,
     radioBw: number,
@@ -531,11 +548,12 @@ export class MeshCoreClient extends TypedEventEmitter<MeshCoreEvents> {
     await this.request(() => this.raw.resetPath(resolveKey(contact)));
   }
 
-  /** Configure whether new contacts are added automatically or manually. */
+  /** Switch the device to automatically add new contacts when they advertise (emits `advert`). */
   async setAutoAddContacts(): Promise<void> {
     await this.request(() => this.raw.setAutoAddContacts());
   }
 
+  /** Switch the device to require adding new contacts manually (emits `newAdvert` instead of auto-adding). */
   async setManualAddContacts(): Promise<void> {
     await this.request(() => this.raw.setManualAddContacts());
   }

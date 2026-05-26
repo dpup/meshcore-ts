@@ -46,16 +46,6 @@ new MeshCoreClient(connection, options?): MeshCoreClient;
 
 #### Properties
 
-##### emitter
-
-```ts
-protected readonly emitter: EventEmitter<DefaultEventMap>;
-```
-
-###### Inherited from
-
-[`TypedEventEmitter`](#typedeventemitter).[`emitter`](#emitter-1)
-
 ##### raw
 
 ```ts
@@ -136,11 +126,7 @@ deleteChannel(channelIdx): Promise<void>;
 ##### deviceQuery()
 
 ```ts
-deviceQuery(appTargetVer?): Promise<{
-  firmwareBuildDate: string;
-  firmwareVer: number;
-  manufacturerModel: string;
-}>;
+deviceQuery(appTargetVer?): Promise<DeviceInfo>;
 ```
 
 ###### Parameters
@@ -151,40 +137,7 @@ deviceQuery(appTargetVer?): Promise<{
 
 ###### Returns
 
-`Promise`\<\{
-  `firmwareBuildDate`: `string`;
-  `firmwareVer`: `number`;
-  `manufacturerModel`: `string`;
-\}\>
-
-##### emit()
-
-```ts
-protected emit<K>(event, ...args): boolean;
-```
-
-Emit an event. Only callable by subclasses.
-
-###### Type Parameters
-
-| Type Parameter |
-| ------ |
-| `K` *extends* \| `"channelData"` \| `"contactMessage"` \| `"channelMessage"` \| `"connected"` \| `"disconnected"` \| `"rx"` \| `"error"` \| `"advert"` \| `"newAdvert"` \| `"pathUpdated"` \| `"sendConfirmed"` \| `"msgWaiting"` \| `"rawData"` \| `"loginSuccess"` \| `"statusResponse"` \| `"logRxData"` \| `"traceData"` \| `"telemetryResponse"` \| `"binaryResponse"` |
-
-###### Parameters
-
-| Parameter | Type |
-| ------ | ------ |
-| `event` | `K` |
-| ...`args` | [`MeshCoreEvents`](#meshcoreevents)\[`K`\] |
-
-###### Returns
-
-`boolean`
-
-###### Inherited from
-
-[`TypedEventEmitter`](#typedeventemitter).[`emit`](#emit-1)
+`Promise`\<[`DeviceInfo`](#deviceinfo)\>
 
 ##### exportContact()
 
@@ -281,18 +234,12 @@ findContactByPublicKeyPrefix(prefix): Promise<Contact | undefined>;
 ##### getBatteryVoltage()
 
 ```ts
-getBatteryVoltage(): Promise<{
-  milliVolts: number;
-  volts: number;
-}>;
+getBatteryVoltage(): Promise<BatteryVoltage>;
 ```
 
 ###### Returns
 
-`Promise`\<\{
-  `milliVolts`: `number`;
-  `volts`: `number`;
-\}\>
+`Promise`\<[`BatteryVoltage`](#batteryvoltage)\>
 
 ##### getChannel()
 
@@ -829,7 +776,7 @@ setAdvertName(name): Promise<void>;
 setAutoAddContacts(): Promise<void>;
 ```
 
-Configure whether new contacts are added automatically or manually.
+Switch the device to automatically add new contacts when they advertise (emits `advert`).
 
 ###### Returns
 
@@ -897,6 +844,8 @@ setDeviceTime(time): Promise<void>;
 setManualAddContacts(): Promise<void>;
 ```
 
+Switch the device to require adding new contacts manually (emits `newAdvert` instead of auto-adding).
+
 ###### Returns
 
 `Promise`\<`void`\>
@@ -933,14 +882,16 @@ setRadioParams(
 radioCr): Promise<void>;
 ```
 
+Configure the LoRa radio parameters.
+
 ###### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `radioFreq` | `number` |
-| `radioBw` | `number` |
-| `radioSf` | `number` |
-| `radioCr` | `number` |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `radioFreq` | `number` | Centre frequency in kHz (e.g. `910525` for 910.525 MHz). |
+| `radioBw` | `number` | Bandwidth in kHz. |
+| `radioSf` | `number` | Spreading factor (typically 7–12). |
+| `radioCr` | `number` | Coding-rate denominator (5–8, for rates 4/5 to 4/8). |
 
 ###### Returns
 
@@ -952,11 +903,13 @@ radioCr): Promise<void>;
 setTxPower(txPower): Promise<void>;
 ```
 
+Set the radio transmit power.
+
 ###### Parameters
 
-| Parameter | Type |
-| ------ | ------ |
-| `txPower` | `number` |
+| Parameter | Type | Description |
+| ------ | ------ | ------ |
+| `txPower` | `number` | Transmit power in dBm. |
 
 ###### Returns
 
@@ -1201,7 +1154,7 @@ new MeshCoreTimeoutError(message?): MeshCoreTimeoutError;
 ### TypedEventEmitter
 
 A small strongly-typed wrapper over Node's `EventEmitter`. Subclasses emit
-via the protected [emit](#emit-1) method; consumers use the public
+via the protected `emit` method; consumers use the public
 `on`/`once`/`off` methods, which only accept known event names and correctly
 typed listeners.
 
@@ -1227,40 +1180,7 @@ new TypedEventEmitter<Events>(): TypedEventEmitter<Events>;
 
 [`TypedEventEmitter`](#typedeventemitter)\<`Events`\>
 
-#### Properties
-
-##### emitter
-
-```ts
-protected readonly emitter: EventEmitter<DefaultEventMap>;
-```
-
 #### Methods
-
-##### emit()
-
-```ts
-protected emit<K>(event, ...args): boolean;
-```
-
-Emit an event. Only callable by subclasses.
-
-###### Type Parameters
-
-| Type Parameter |
-| ------ |
-| `K` *extends* `string` |
-
-###### Parameters
-
-| Parameter | Type |
-| ------ | ------ |
-| `event` | `K` |
-| ...`args` | `Events`\[`K`\] |
-
-###### Returns
-
-`boolean`
 
 ##### listenerCount()
 
@@ -2068,11 +1988,15 @@ Payload of the `newAdvert` push (manual-add mode).
 advLat: number;
 ```
 
+Advertised latitude in micro-degrees (degrees * 1e6).
+
 ##### advLon
 
 ```ts
 advLon: number;
 ```
+
+Advertised longitude in micro-degrees (degrees * 1e6).
 
 ##### advName
 
@@ -2380,11 +2304,15 @@ Information about the connected device itself.
 advLat: number;
 ```
 
+Advertised latitude in micro-degrees (degrees * 1e6).
+
 ##### advLon
 
 ```ts
 advLon: number;
 ```
+
+Advertised longitude in micro-degrees (degrees * 1e6).
 
 ##### manualAddContacts
 
@@ -3065,3 +2993,16 @@ Encode bytes as a lowercase hex string (no `0x` prefix).
 #### Returns
 
 `string`
+
+
+## Transports & raw access
+
+These symbols are re-exported as-is from the untyped `@liamcottle/meshcore.js`, so they carry minimal or no type information here. Most users should not need them directly — prefer the typed helpers `MeshCoreClient.tcp(host, port)` and `MeshCoreClient.serial(path)` to create a client.
+
+- `TCPConnection` — `new TCPConnection(host: string, port: number)`; the WiFi transport.
+- `NodeJSSerialConnection` — `new NodeJSSerialConnection(path: string)`; the USB-serial transport.
+- `Connection` — the base connection class; the type of `MeshCoreClient.raw` (escape hatch for unwrapped APIs).
+- `Constants` — the raw numeric protocol constants from meshcore.js.
+- `BufferUtils`, `TransportKeyUtil` — raw helper utilities from meshcore.js.
+
+See the [Guide](./guide.md) for connecting.

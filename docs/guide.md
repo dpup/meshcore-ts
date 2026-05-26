@@ -21,7 +21,27 @@ await client.close();
 `connect()` rejects with a `MeshCoreTimeoutError` if the device doesn't report
 ready within `requestTimeoutMs`. Note that the underlying transports only log
 low-level socket errors (e.g. `ECONNREFUSED`) rather than surfacing them, so a
-failed connection appears as a timeout rather than the specific error.
+failed connection appears as a timeout rather than the specific error. When
+debugging a failed connect, check the host/port/reachability and look at stderr
+for the underlying socket error the transport logged there.
+
+### Reconnecting
+
+Each `connect()` opens a fresh transport socket, so after a `disconnected` event
+you can call `client.connect()` again to reconnect on the same client:
+
+```ts
+client.on("disconnected", async () => {
+  try {
+    await client.connect();
+  } catch {
+    // still down — back off and retry, or recreate the client
+  }
+});
+```
+
+If reconnection on an existing client misbehaves, create a fresh one with
+`MeshCoreClient.tcp(…)` (or `.serial(…)`) and connect that instead.
 
 ### Options
 
@@ -34,6 +54,9 @@ MeshCoreClient.tcp(host, port, {
 
 ## Events
 
+Public keys, paths, and secrets are lowercase hex strings; `pubKeyPrefix` is the
+first 6 bytes of a public key, hex-encoded.
+
 The client is a typed event emitter. Subscribe with `on` / `once` / `off`:
 
 ```ts
@@ -44,8 +67,10 @@ client.on("advert", (a) => console.log("heard", a.publicKey));
 | Event | Payload | Fires when |
 | --- | --- | --- |
 | `connected` / `disconnected` | — | connection lifecycle |
+| `rx` | `Uint8Array` | every frame received from the device (the raw frame) |
 | `contactMessage` / `channelMessage` | `ContactMessage` / `ChannelMessage` | an incoming message is drained |
 | `channelData` | `ChannelData` | a channel datagram is drained |
+| `msgWaiting` | — | the device has messages waiting (triggers auto-sync) |
 | `advert` / `newAdvert` | `Advert` / `NewAdvert` | a node advertises |
 | `pathUpdated` | `{ publicKey }` | a contact's path changes |
 | `rawData` / `logRxData` | `RawData` / `LogRxData` | a packet is received (with SNR/RSSI) |
@@ -63,18 +88,32 @@ default) drains the queue and emits `contactMessage` / `channelMessage` /
 `channelData`. To pull manually instead, set `autoSync: false` and call
 `getWaitingMessages()` yourself (e.g. on the `msgWaiting` event):
 
+`getWaitingMessages()` returns `WaitingMessage[]`, a discriminated union with
+three arms — `contact` and `channel` carry a `.message`, while `channelData`
+carries `.data` (not `.message`). Switch on `kind` to handle all three:
+
 ```ts
 const client = MeshCoreClient.tcp(host, port, { autoSync: false });
 client.on("msgWaiting", async () => {
   for (const m of await client.getWaitingMessages()) {
-    if (m.kind === "contact") console.log(m.message.text);
+    switch (m.kind) {
+      case "contact":
+        console.log(m.message.text);
+        break;
+      case "channel":
+        console.log(`ch${m.message.channelIdx}: ${m.message.text}`);
+        break;
+      case "channelData":
+        console.log(`ch${m.data.channelIdx} datagram (${m.data.data.length}B)`);
+        break;
+    }
   }
 });
 ```
 
-> **Always attach an `error` listener** if `autoSync` is on. A failed background
-> drain emits `error`; with no listener, Node's EventEmitter would throw. The
-> client guards against a crash (it logs instead), but you'll miss the error.
+> **Attach an `error` listener** if `autoSync` is on: a failed background drain
+> emits `error`. The client won't crash without one (it logs to stderr instead),
+> but you'll miss the error otherwise.
 
 ## Messaging
 
@@ -86,6 +125,10 @@ if (alice) await client.sendTextMessage(alice, "hello", TxtType.Plain);
 
 await client.sendChannelTextMessage(0, "hello channel");
 ```
+
+The message type is a `TxtType`: `TxtType.Plain` (0), `TxtType.CliData` (1), or
+`TxtType.SignedPlain` (2). `Plain` is the default for `sendTextMessage` when you
+omit the argument.
 
 Any method that takes a contact accepts a `Contact`, a hex public-key string, or
 raw `Uint8Array` bytes (the `ContactRef` type).
@@ -127,7 +170,7 @@ estimated timeout instead.
 ```ts
 await client.login(repeater, "password");
 const status = await client.getStatus(repeater);      // RepeaterStats
-const telem = await client.getTelemetry(sensor);      // Cayenne LPP bytes
+const telem = await client.getTelemetry(sensor);      // Telemetry; LPP bytes on telem.lppSensorData
 const { neighbours } = await client.getNeighbours(repeater);
 ```
 

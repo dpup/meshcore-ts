@@ -37,7 +37,9 @@ export interface SelfInfo {
   txPower: number;
   maxTxPower: number;
   publicKey: string;
+  /** Advertised latitude in micro-degrees (degrees * 1e6). */
   advLat: number;
+  /** Advertised longitude in micro-degrees (degrees * 1e6). */
   advLon: number;
   /** Whether the device adds new contacts manually (vs. automatically). */
   manualAddContacts: boolean;
@@ -135,7 +137,9 @@ export interface NewAdvert {
   outPath: string;
   advName: string;
   lastAdvert: Date;
+  /** Advertised latitude in micro-degrees (degrees * 1e6). */
   advLat: number;
+  /** Advertised longitude in micro-degrees (degrees * 1e6). */
   advLon: number;
   lastMod: Date;
 }

@@ -5,6 +5,7 @@
  * Run with a TS runner, e.g.:
  *   bunx tsx examples/list-contacts.ts 192.168.1.50 5000
  */
+// in your project: import { MeshCoreClient } from "@dpup/meshcore-ts"
 import { MeshCoreClient } from "../src/index.js";
 
 async function main(): Promise<void> {

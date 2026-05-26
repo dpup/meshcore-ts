@@ -71,7 +71,7 @@ export type EventMap = Record<string, unknown[]>;
 
 /**
  * A small strongly-typed wrapper over Node's `EventEmitter`. Subclasses emit
- * via the protected {@link emit} method; consumers use the public
+ * via the protected `emit` method; consumers use the public
  * `on`/`once`/`off` methods, which only accept known event names and correctly
  * typed listeners.
  */

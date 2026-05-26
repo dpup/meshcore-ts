@@ -12,6 +12,7 @@
  *
  * Defaults: host 172.16.0.23, port 5000, run until Ctrl-C.
  */
+// in your project: import { MeshCoreClient } from "@dpup/meshcore-ts"
 import { MeshCoreClient } from "../src/index.js";
 
 const host = process.argv[2] ?? "172.16.0.23";

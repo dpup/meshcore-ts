@@ -30,6 +30,8 @@ const alice = await client.findContactByName("alice");
 if (alice) await client.sendTextMessage(alice, "hello from typescript", TxtType.Plain);
 ```
 
+Save as `index.ts` and run with `bunx tsx index.ts` (the snippet uses top-level `await`, so it needs an ESM/TS runner).
+
 ## Features
 
 - 🧩 **Fully typed** — typed methods, events, and data models (`Contact`, `Channel`, `SelfInfo`, `RepeaterStats`, …).
@@ -55,13 +57,14 @@ ESM-only, **Node.js ≥ 18**. The `@liamcottle/meshcore.js` dependency is instal
 Any method that takes a contact accepts a `Contact`, a hex public-key string, or
 raw `Uint8Array` bytes. The client auto-drains incoming messages and emits
 `contactMessage` / `channelMessage` / `channelData` events by default — see the
-[guide](./docs/guide.md#events) for the full event catalog and options.
+[guide](./docs/guide.md#events) for the full event catalog and options. When
+`autoSync` is on, attach an `error` listener so background-drain failures aren't
+lost.
 
 ## Design notes
 
-- **A wrapper, not a reimplementation.** All protocol logic lives in
-  `@liamcottle/meshcore.js`; this package delegates and layers on types,
-  normalization, and safety — so it tracks upstream automatically.
+- **All protocol logic lives in `@liamcottle/meshcore.js`.** This package owns
+  only the types, normalization, and safety layered on top.
 - **Node-focused, ESM-only.** Transports are TCP/WiFi and USB serial. This mirrors
   `meshcore.js` and keeps the `serialport` dependency out of browser bundles;
   browser BLE/WebSerial transports are intentionally not exposed.
