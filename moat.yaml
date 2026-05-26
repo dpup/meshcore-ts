@@ -8,7 +8,7 @@ dependencies:
   - git
   - gh
   - node
-  - claude-code@2.1.150 # 2.1.150 steals text input; pin to known-good build
+  - claude-code
 
 # Credentials injected into the sandbox.
 #   github        -> GitHub API (gh CLI, REST)
@@ -18,6 +18,7 @@ grants:
   - github
   - ssh:github.com
   - claude
+  - npm
 
 # Cache installed packages across runs so reinstalls are fast without adding
 # anything to startup. bun installs into node_modules by default.
