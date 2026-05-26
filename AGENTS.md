@@ -85,6 +85,23 @@ These caused real bugs; don't regress them.
    `syncNextMessage` until the timeout. **Decision: leave it — band-aiding over the
    core lib is out of scope.** It'll decode automatically if upstream adds it.
 
+## Keeping in sync with upstream
+
+We hand-mirror upstream in `src/enums.ts`, `src/meshcore.d.ts`, and `client.ts`
+`bindEvents`. Two guards catch drift before it ships:
+
+- **`test/drift.test.ts`** (runs in CI): asserts our enum values, handled push
+  codes, and delegated method names match the **installed** `meshcore.js`. When it
+  fails after a dependency bump, reconcile exactly what it names, then it passes.
+  It can't check erased type shapes — reconcile the `Raw*` types in
+  `meshcore.d.ts` by hand from the upstream diff.
+- **`.github/workflows/upstream-drift.yml`** (weekly + manual): opens an
+  `upstream-drift` issue with the upstream `constants.js`/`connection.js` diff when
+  a newer `meshcore.js` is published. To reconcile: update the mirrors/wrappers,
+  bump the dependency (drift.test then verifies), and close the issue. Dispatch it
+  with a `base_override` input (e.g. an older version) to exercise the
+  issue-creation path on demand.
+
 ## Testing
 
 - Unit tests use `test/fake-connection.ts` — a real `EventEmitter` with stubbable

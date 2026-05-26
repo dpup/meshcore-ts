@@ -9,7 +9,12 @@ name: Upstream drift check
 on:
   schedule:
     - cron: "0 9 * * 1" # Mondays 09:00 UTC
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      base_override:
+        description: "Baseline version to compare against (for testing the drift path, e.g. 1.12.0). Leave empty for normal behavior."
+        required: false
+        default: ""
 
 permissions:
   contents: read
@@ -31,7 +36,10 @@ jobs:
       - name: Determine versions
         id: ver
         run: |
-          base=$(node -p "require('./package.json').dependencies['${PKG}'].match(/[0-9]+\.[0-9]+\.[0-9]+/)[0]")
+          base="${{ github.event.inputs.base_override }}"
+          if [ -z "$base" ]; then
+            base=$(node -p "require('./package.json').dependencies['${PKG}'].match(/[0-9]+\.[0-9]+\.[0-9]+/)[0]")
+          fi
           latest=$(npm view "${PKG}" version)
           echo "base=$base"     >> "$GITHUB_OUTPUT"
           echo "latest=$latest" >> "$GITHUB_OUTPUT"
