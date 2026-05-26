@@ -24,8 +24,12 @@ src/
   transports.ts   Typed re-export of TCP/serial classes + Constants.
   meshcore.d.ts   Ambient shim typing the untyped dependency (see "Packaging").
 scripts/postbuild.mjs   Ships the shim into dist (see "Packaging").
+scripts/postdocs.mjs    Finalizes TypeDoc output into a single docs/api.md.
 test/             Vitest unit tests + FakeConnection double.
 examples/         list-contacts.ts, monitor.ts.
+docs/api.md       GENERATED API reference (TypeDoc) — do not hand-edit.
+docs/guide.md     Hand-written concepts & recipes.
+llms.txt          Agent index pointing at the docs.
 ```
 
 ## Commands
@@ -35,7 +39,20 @@ bun install
 bun run typecheck   # tsc --noEmit (strict, includes src/test/examples)
 bun run test        # vitest run
 bun run build       # tsc -p tsconfig.build.json + postbuild
+bun run docs        # regenerate docs/api.md from source TSDoc/types
 ```
+
+## Docs
+
+Three layers: `README.md` (curated landing), `docs/guide.md` (hand-written
+concepts/recipes), and `docs/api.md` (**generated** by TypeDoc from the source
+TSDoc + types — the source of truth). `llms.txt` indexes all three for agents.
+
+`docs/api.md` is committed and **CI-gated**: `bun run docs:check` regenerates it
+and fails if it differs from what's committed. So whenever you change the public
+API or its doc comments, run `bun run docs` and commit the result. The generator
+excludes the raw `meshcore.d.ts` shim and disables source links (kept
+deterministic so the gate only trips on real API changes).
 
 ## Conventions
 

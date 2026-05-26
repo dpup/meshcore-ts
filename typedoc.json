@@ -1,0 +1,17 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "plugin": ["typedoc-plugin-markdown"],
+  "out": "docs/.api-tmp",
+  "readme": "none",
+  "githubPages": false,
+  "outputFileStrategy": "modules",
+  "excludeExternals": true,
+  "externalPattern": ["**/node_modules/**", "**/src/meshcore.d.ts"],
+  "excludeInternal": true,
+  "disableSources": true,
+  "hideBreadcrumbs": true,
+  "useCodeBlocks": true,
+  "parametersFormat": "table",
+  "validation": { "notExported": false, "invalidLink": true, "notDocumented": false }
+}

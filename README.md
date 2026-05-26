@@ -16,13 +16,18 @@ WiFi or USB without wrangling raw numeric byte codes and `Uint8Array`s — and y
 get upstream protocol updates for free.
 
 ```ts
-import { MeshCoreClient } from "@dpup/meshcore-ts";
+import { MeshCoreClient, TxtType } from "@dpup/meshcore-ts";
 
-const client = MeshCoreClient.tcp("192.168.1.50", 5000);
+const client = MeshCoreClient.tcp("192.168.1.50", 5000); // or .serial("/dev/ttyACM0")
 client.on("contactMessage", (msg) => console.log(`${msg.pubKeyPrefix}: ${msg.text}`));
 
 await client.connect();
-const contacts = await client.getContacts();
+
+const self = await client.getSelfInfo();
+console.log(`Connected to "${self.name}" — ${self.publicKey}`);
+
+const alice = await client.findContactByName("alice");
+if (alice) await client.sendTextMessage(alice, "hello from typescript", TxtType.Plain);
 ```
 
 ## Features
@@ -42,90 +47,24 @@ npm install @dpup/meshcore-ts      # or: bun add @dpup/meshcore-ts / pnpm add @d
 
 ESM-only, **Node.js ≥ 18**. The `@liamcottle/meshcore.js` dependency is installed automatically.
 
-## Quick start
+## Documentation
 
-```ts
-import { MeshCoreClient, TxtType } from "@dpup/meshcore-ts";
-
-// Connect over TCP/WiFi …
-const client = MeshCoreClient.tcp("192.168.1.50", 5000);
-// … or USB serial:
-// const client = MeshCoreClient.serial("/dev/ttyACM0");
-
-await client.connect();
-
-const self = await client.getSelfInfo();
-console.log(`Connected to "${self.name}" — ${self.publicKey}`);
-
-const alice = await client.findContactByName("alice");
-if (alice) {
-  await client.sendTextMessage(alice, "hello from typescript", TxtType.Plain);
-}
-
-await client.close();
-```
+- **[Guide](./docs/guide.md)** — concepts and recipes: connecting, events & auto-sync, messaging, contacts, errors & timeouts, remote nodes.
+- **[API reference](./docs/api.md)** — the complete, generated reference: every method, event, model, error, and enum with full signatures.
 
 Any method that takes a contact accepts a `Contact`, a hex public-key string, or
-raw `Uint8Array` bytes.
+raw `Uint8Array` bytes. The client auto-drains incoming messages and emits
+`contactMessage` / `channelMessage` / `channelData` events by default — see the
+[guide](./docs/guide.md#events) for the full event catalog and options.
 
-## Events
+## Design notes
 
-By default the client auto-drains the device's message queue on `msgWaiting` and
-emits typed events. Set `{ autoSync: false }` to pull manually with
-`getWaitingMessages()`.
-
-| Event | Payload | When |
-| --- | --- | --- |
-| `connected` / `disconnected` | — | connection lifecycle |
-| `contactMessage` / `channelMessage` | `ContactMessage` / `ChannelMessage` | an incoming message |
-| `channelData` | `ChannelData` | a channel datagram |
-| `advert` / `newAdvert` | `Advert` / `NewAdvert` | a node advertised |
-| `pathUpdated` | `{ publicKey }` | a contact's path changed |
-| `rawData` / `logRxData` | `RawData` / `LogRxData` | received packets (with SNR/RSSI) |
-| `traceData` | `TraceData` | a path trace returned |
-| `telemetryResponse` / `statusResponse` / `binaryResponse` | typed payloads | server responses |
-| `sendConfirmed` / `loginSuccess` | typed payloads | send ack / login |
-| `error` | `Error` | a surfaced async failure (e.g. a failed auto-sync) |
-
-```ts
-const client = MeshCoreClient.tcp(host, port, {
-  requestTimeoutMs: 10_000, // timeout for requests a device might never answer
-  autoSync: true,           // auto-drain + emit on msgWaiting
-});
-```
-
-## API
-
-`MeshCoreClient` provides typed wrappers across the full companion API. All are
-fully typed — your editor's autocomplete is the canonical reference.
-
-- **Device**
-  - `getSelfInfo()`
-  - `getDeviceTime()`, `setDeviceTime()`, `syncDeviceTime()`
-  - `getBatteryVoltage()`, `deviceQuery()`, `reboot()`
-  - `exportPrivateKey()`, `importPrivateKey()`
-- **Contacts**
-  - `getContacts()`, `findContactByName()`, `findContactByPublicKeyPrefix()`
-  - `importContact()`, `exportContact()`, `shareContact()`, `removeContact()`
-  - `addOrUpdateContact()`, `setContactPath()`, `resetPath()`
-  - `setAutoAddContacts()`, `setManualAddContacts()`
-- **Messaging**
-  - `sendTextMessage()`, `sendChannelTextMessage()`
-  - `syncNextMessage()`, `getWaitingMessages()`
-- **Channels**
-  - `getChannel()`, `getChannels()`
-  - `setChannel()`, `deleteChannel()`
-  - `findChannelByName()`, `findChannelBySecret()`
-- **Radio & adverts**
-  - `sendAdvert()`, `sendFloodAdvert()`, `sendZeroHopAdvert()`
-  - `setAdvertName()`, `setAdvertLatLong()`
-  - `setTxPower()`, `setRadioParams()`
-- **Remote nodes**
-  - `login()`, `getStatus()`, `getTelemetry()`
-  - `getNeighbours()`, `sendBinaryRequest()`
-- **Stats, signing & tracing**
-  - `getStats()`, `getStatsCore()`, `getStatsRadio()`, `getStatsPackets()`
-  - `sign()`, `tracePath()`
+- **A wrapper, not a reimplementation.** All protocol logic lives in
+  `@liamcottle/meshcore.js`; this package delegates and layers on types,
+  normalization, and safety — so it tracks upstream automatically.
+- **Node-focused, ESM-only.** Transports are TCP/WiFi and USB serial. This mirrors
+  `meshcore.js` and keeps the `serialport` dependency out of browser bundles;
+  browser BLE/WebSerial transports are intentionally not exposed.
 
 ## Examples
 
@@ -133,21 +72,8 @@ fully typed — your editor's autocomplete is the canonical reference.
 - [`examples/monitor.ts`](examples/monitor.ts) — a live, color-coded traffic monitor.
 
 ```sh
-bun examples/monitor.ts 172.16.0.23 5000        # monitor until Ctrl-C
-bun examples/monitor.ts 172.16.0.23 5000 30     # …for 30 seconds
+bun examples/monitor.ts 172.16.0.23 5000 30     # monitor a node for 30 seconds
 ```
-
-## Design & notes
-
-- **A wrapper, not a reimplementation.** All protocol logic lives in
-  `@liamcottle/meshcore.js`; this package delegates to it and layers on types,
-  normalization, and safety — so it tracks upstream automatically. The raw
-  connection is always reachable via `client.raw` for anything unwrapped.
-- **Node-focused, ESM-only.** Transports are TCP/WiFi and USB serial. ESM-only
-  mirrors `meshcore.js` and keeps the `serialport` dependency out of browser
-  bundles; browser BLE/WebSerial transports are intentionally not exposed.
-- **Values are normalized.** Keys/paths/secrets are hex strings and timestamps are
-  `Date`s; the wrapper converts back when sending.
 
 ## Development
 
@@ -156,6 +82,7 @@ bun install
 bun run typecheck   # tsc --noEmit (strict)
 bun run test        # vitest unit tests (no hardware needed)
 bun run build       # emit dist/ (ESM + .d.ts)
+bun run docs        # regenerate docs/api.md from the source
 ```
 
 See [AGENTS.md](./AGENTS.md) for architecture and contribution notes.

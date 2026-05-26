@@ -41,6 +41,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "docs": "typedoc && node scripts/postdocs.mjs",
+    "docs:check": "typedoc && node scripts/postdocs.mjs && node scripts/docs-check.mjs",
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
@@ -48,6 +50,8 @@
   },
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "typedoc": "^0.28.19",
+    "typedoc-plugin-markdown": "^4.11.0",
     "typescript": "^5.6.0",
     "vitest": "^2.1.0"
   }
