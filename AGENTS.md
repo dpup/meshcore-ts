@@ -109,3 +109,18 @@ We hand-mirror upstream in `src/enums.ts`, `src/meshcore.d.ts`, and `client.ts`
   dispatch; use `emitRawSync` when a test needs deterministic re-entrancy timing.
 - No hardware needed for tests. For live checks, point `examples/monitor.ts` at a
   node. A node may emit nothing passively unless the mesh is active.
+
+## Releasing
+
+Tag-driven via `.github/workflows/release.yml` (npm Trusted Publishing / OIDC +
+provenance — no token secret). To cut a release:
+
+```sh
+npm version patch        # or minor / major — bumps package.json, commits, tags vX.Y.Z
+git push --follow-tags   # pushing the tag triggers the release workflow
+```
+
+CI then typechecks/tests/builds, verifies the tag matches `package.json`,
+publishes `@dpup/meshcore-ts` with provenance, and opens a GitHub Release with
+generated notes. Trusted publishing must be configured for the package on
+npmjs.com first (repo `dpup/meshcore-ts`, workflow `release.yml`).
